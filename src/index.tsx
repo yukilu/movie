@@ -1,15 +1,44 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { ConfigProvider } from 'antd';
+import dayjs from 'dayjs';
+import zhCN from 'antd/locale/zh_CN';
+import 'dayjs/locale/zh-cn';
 import App from './App';
+import Actor from './Actor';
 import reportWebVitals from './reportWebVitals';
+import './index.css';
+
+dayjs.locale('zh-cn');
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <App />,
+  },
+  {
+    path: '/actor',
+    element: <Actor />,
+  },
+  // {
+  //   path: '/series',
+  //   element: <Series />,
+  // },
+  // {
+  //   path: '/tag',
+  //   element: <Tag />,
+  // },
+]);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <ConfigProvider locale={zhCN}>
+      <RouterProvider router={router} />
+    </ConfigProvider>
   </React.StrictMode>
 );
 
