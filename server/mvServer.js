@@ -34,7 +34,7 @@ function run(sql, values) {
 }
 
 app.get('/node/actor-list', (req, res) => {
-  const sql = `SELECT * From actor ORDER BY name`;
+  const sql = 'SELECT * From actor ORDER BY name';
   selectAll(sql).then(rows => {
     res.json({ code: 200, data: rows, message: 'success' });
   }, err => {
