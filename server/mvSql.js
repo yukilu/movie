@@ -3,17 +3,25 @@ import sqlite3 from "sqlite3";
 const db = new sqlite3.Database('mv.db');
 
 db.serialize(function() {
-  db.run('CREATE TABLE IF NOT EXISTS actor (id INTEGER PRIMARY KEY AUTOINCREMENT, name CHAR(30), name1 CHAR(30), name2 CHAR(30), age INTEGER, tags CHAR(30), desc CHAR(50))', (err, result) => {
-    console.log('create', err, result);
-    db.close();
-  });
+  // db.run('CREATE TABLE IF NOT EXISTS actor (id INTEGER PRIMARY KEY AUTOINCREMENT, name CHAR(30), name1 CHAR(30), name2 CHAR(30), age INTEGER, tags CHAR(30), desc CHAR(50))', (err, result) => {
+  //   console.log('create', err, result);
+  //   db.close();
+  // });
 
-  // db.run('CREATE TABLE IF NOT EXISTS subject (id INTEGER PRIMARY KEY AUTOINCREMENT, name CHAR(100))', (err, result) => {
+  // db.run('CREATE TABLE IF NOT EXISTS tag (id INTEGER PRIMARY KEY AUTOINCREMENT, name CHAR(30), type CHAR(20), color CHAR(30), desc CHAR(60))', (err, result) => {
   //   console.log('create', err, result);
   // });
 
-  // db.run('CREATE TABLE IF NOT EXISTS content (id INTEGER PRIMARY KEY AUTOINCREMENT, idx INT, content CHAR(100), link CHAR(200), subject_id INTEGER)', (err, result) => {
+  // db.run('CREATE TABLE IF NOT EXISTS series (id INTEGER PRIMARY KEY AUTOINCREMENT, name CHAR(30), full CHAR(150), type CHAR(20), publisher CHAR(60), desc CHAR(60))', (err, result) => {
   //   console.log('create', err, result);
+  // });
+
+  // db.run('CREATE TABLE IF NOT EXISTS video (id INTEGER PRIMARY KEY AUTOINCREMENT, name CHAR(150), series INTEGER, idx CHAR(20), actor INTEGER, tags CHAR(60), status CHAR(30), disk CHAR(40), desc CHAR(60))', (err, result) => {
+  //   console.log('create', err, result);
+  // });
+
+  // db.run('ALTER TABLE video ADD COLUMN date DATE', (err, result) => {
+  //   console.log(err, result);
   // });
 
   // const sql = `SELECT s.id, c.id AS content_id, name, idx, content, link

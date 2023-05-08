@@ -4,7 +4,6 @@ import {
   Col,
   Form,
   Input,
-  InputNumber,
   message,
   Modal,
   Popconfirm,
@@ -12,6 +11,7 @@ import {
   Table,
   Select,
   Space,
+  Tag,
 } from 'antd';
 import {
   EditOutlined,
@@ -20,25 +20,23 @@ import {
   SearchOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { headers, request } from './utils';
+import { headers, request, seriesTypeMap, seriesTypes } from './utils';
 import type { ColumnsType } from 'antd/es/table';
 import type {
-  ActorSearchParams as SearchParams,
-  ActorFieldsValue as FieldsValue,
-  ActorEditParams as EditParams,
-  ActorListItem as ListItem,
-  TagListItem,
+  SeriesSearchParams as SearchParams,
+  SeriesFieldsValue as FieldsValue,
+  SeriesEditParams as EditParams,
+  SeriesListItem as ListItem,
 } from './utils';
 import './App.css';
 
 const { Item } = Form;
 
-export default function Actor() {
+export default function Series() {
   const [list, setList] = useState<ListItem[]>([]);
   const [initList, setInitList] = useState<ListItem[]>([]);
   const [visible, setVisible] = useState(false);
   const [record, setRecord] = useState<ListItem | null>(null);
-  const [tagList, setTagList] = useState<TagListItem[]>([]);
 
   const [searchForm] = Form.useForm<SearchParams>();
   const [form] = Form.useForm<FieldsValue>();
@@ -46,12 +44,12 @@ export default function Actor() {
   const isEdit = !!record;
 
   function filterList(list: ListItem[]) {
-    const { name, tag } = searchForm.getFieldsValue();
+    const { name, type } = searchForm.getFieldsValue();
     let filtered = list;
     if (name)
       filtered = list.filter(item => item.name.includes(name));
-    if (tag)
-      filtered = list.filter(item => item.tags?.includes(tag));
+    if (type)
+      filtered = list.filter(item => item.type === type);
     return filtered;
   }
 
@@ -72,15 +70,11 @@ export default function Actor() {
   function handleEdit(record: ListItem) {
     setVisible(true);
     setRecord(record);
-    const { tags, ...rest } = record;
-    form.setFieldsValue({
-      ...rest,
-      tags: tags ? tags.split(',') : undefined,
-    });
+    form.setFieldsValue(record);
   }
 
   async function handleDelete(id: number) {
-    const res = await request(`/node/actor/${id}`, {
+    const res = await request(`/node/series/${id}`, {
       method: 'DELETE',
     });
     if (!res) return;
@@ -99,7 +93,7 @@ export default function Actor() {
   }
 
   async function postOrPut(payload: EditParams) {
-    const url = `/node/actor${isEdit ? `/${record.id}` : ''}`;
+    const url = `/node/series${isEdit ? `/${record.id}` : ''}`;
     const res = await request(url, {
       headers,
       method: isEdit ? 'PUT' : 'POST',
@@ -117,16 +111,12 @@ export default function Actor() {
 
   function handleSubmit() {
     form.validateFields().then(values => {
-      const { tags, ...rest } = values;
-      postOrPut({
-        ...rest,
-        tags: tags ? tags.join(',') : undefined,
-      });
+      postOrPut(values);
     });
   }
 
   async function fetchList() {
-    const res = await request('/node/actor-list');
+    const res = await request('/node/series-list');
     if (!res) return;
 
     const { code, data, message: msg } = res;
@@ -136,34 +126,23 @@ export default function Actor() {
     } else message.error(msg); 
   }
 
-  async function fetchTagList() {
-    const res = await request('/node/tag-list');
-    if (!res) return;
-
-    const { code, data } = res;
-    if (code === 200 && data) setTagList(data);
-  }
-
   const columns: ColumnsType<ListItem> = [
     {
-      title: '名字',
+      title: '名称',
       dataIndex: 'name',
     },
     {
-      title: '名字二',
-      dataIndex: 'name1',
+      title: '全称',
+      dataIndex: 'full',
     },
     {
-      title: '名字三',
-      dataIndex: 'name2',
+      title: '类型',
+      dataIndex: 'type',
+      render: (t: string) => <Tag color={t === '无码' ? 'blue' : 'magenta'}>{seriesTypeMap[t]}</Tag>,
     },
     {
-      title: '年龄',
-      dataIndex: 'age',
-    },
-    {
-      title: '标签',
-      dataIndex: 'tags',
+      title: '出版商',
+      dataIndex: 'publisher',
     },
     {
       title: '描述',
@@ -185,7 +164,6 @@ export default function Actor() {
 
   useEffect(() => {
     fetchList();
-    fetchTagList();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -194,20 +172,13 @@ export default function Actor() {
       <Form form={searchForm}>
         <Row gutter={24}>
           <Col span={8}>
-            <Item label="名字" name="name">
-              <Input allowClear placeholder="请输入名字" />
+            <Item label="名称" name="name">
+              <Input allowClear placeholder="请输入名称" />
             </Item>
           </Col>
           <Col span={8}>
-            <Item label="标签" name="tag">
-              <Select
-                allowClear
-                showSearch
-                placeholder="请选择标签"
-                optionFilterProp="name"
-                options={tagList}
-                fieldNames={{ value: 'id', label: 'name' }}
-              />
+            <Item label="类型" name="type">
+              <Select allowClear placeholder="请选择类型" options={seriesTypes} />
             </Item>
           </Col>
           <Col span={8} style={{ textAlign: 'right' }}>
@@ -243,43 +214,30 @@ export default function Actor() {
           validateMessages={{ required: '${label}不能为空' }}
         >
           <Item
-            label="名字"
+            label="名称"
             name="name"
             rules={[{ required: true }]}
           >
-            <Input allowClear placeholder="请输入名字" />
+            <Input allowClear placeholder="请输入名称" />
           </Item>
           <Item
-            label="名字二"
-            name="name1"
+            label="全称"
+            name="full"
           >
-            <Input allowClear placeholder="请输入名字二" />
+            <Input placeholder="请输入全称" />
           </Item>
           <Item
-            label="名字三"
-            name="name2"
+            label="类型"
+            name="type"
+            rules={[{ required: true }]}
           >
-            <Input allowClear placeholder="请输入名字三" />
+            <Select placeholder="请选择类型" options={seriesTypes} />
           </Item>
           <Item
-            label="年龄"
-            name="age"
+            label="出版商"
+            name="publisher"
           >
-            <InputNumber style={{ width: '100%' }} min={14} />
-          </Item>
-          <Item
-            label="标签"
-            name="tags"
-          >
-            <Select
-              allowClear
-              showSearch
-              mode="multiple"
-              placeholder="请选择标签"
-              optionFilterProp="name"
-              options={tagList}
-              fieldNames={{ value: 'id', label: 'name' }}
-            />
+            <Input allowClear placeholder="请输入出版商" />
           </Item>
           <Item
             label="描述"

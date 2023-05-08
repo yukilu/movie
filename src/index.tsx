@@ -7,6 +7,8 @@ import zhCN from 'antd/locale/zh_CN';
 import 'dayjs/locale/zh-cn';
 import App from './App';
 import Actor from './Actor';
+import Tag from './Tag';
+import Series from './Series';
 import reportWebVitals from './reportWebVitals';
 import './index.css';
 
@@ -21,14 +23,14 @@ const router = createBrowserRouter([
     path: '/actor',
     element: <Actor />,
   },
-  // {
-  //   path: '/series',
-  //   element: <Series />,
-  // },
-  // {
-  //   path: '/tag',
-  //   element: <Tag />,
-  // },
+  {
+    path: '/series',
+    element: <Series />,
+  },
+  {
+    path: '/tag',
+    element: <Tag />,
+  },
 ]);
 
 const root = ReactDOM.createRoot(
