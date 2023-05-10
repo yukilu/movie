@@ -33,6 +33,7 @@ import {
   getTags,
   getIdListByIds,
   statusColors,
+  stringify,
 } from './utils';
 import type { ColumnsType } from 'antd/es/table';
 import type {
@@ -52,7 +53,8 @@ const { Item } = Form;
 
 export default function App() {
   const [list, setList] = useState<ListItem[]>([]);
-  const [initList, setInitList] = useState<ListItem[]>([]);
+  // const [initList, setInitList] = useState<ListItem[]>([]);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [visible, setVisible] = useState(false);
   const [record, setRecord] = useState<ListItem | null>(null);
   const [tagList, setTagList] = useState<TagListItem[]>([]);
@@ -66,35 +68,48 @@ export default function App() {
   const [form] = Form.useForm<FieldsValue>();
 
   const isEdit = !!record;
+  const { current, pageSize, total } = pagination;
+  const tablePagination = {
+    current,
+    pageSize,
+    total,
+    showTotal: (total: number) => `共${total}条`,
+    showSizeChanger: true,
+    showQuickJumper: true,
+  };
 
-  function filterList(list: ListItem[]) {
-    const searchValues =  searchForm.getFieldsValue();
-    const { name, tag, actor } = searchValues;
-    let filtered = list;
-    if (name)
-      filtered = list.filter(item => item.name.includes(name));
-    if (tag)
-      filtered = list.filter(item => getIdListByIds(item.tags).includes(tag));
-    if (actor)
-      filtered = list.filter(item => getIdListByIds(item.actors).includes(actor));
-    filtered = (['series', 'idx', 'status', 'disk'] as const).reduce((acc, cur) => {
-      const value = searchValues[cur];
-      if (value)
-        return acc.filter(item => item[cur] === value);
-      return acc;
-    }, filtered);
+  // function filterList(list: ListItem[]) {
+  //   const searchValues =  searchForm.getFieldsValue();
+  //   const { name, tag, actor } = searchValues;
+  //   let filtered = list;
+  //   if (name)
+  //     filtered = list.filter(item => item.name.includes(name));
+  //   if (tag)
+  //     filtered = list.filter(item => getIdListByIds(item.tags).includes(tag));
+  //   if (actor)
+  //     filtered = list.filter(item => getIdListByIds(item.actors).includes(actor));
+  //   filtered = (['series', 'idx', 'status', 'disk'] as const).reduce((acc, cur) => {
+  //     const value = searchValues[cur];
+  //     if (value)
+  //       return acc.filter(item => item[cur] === value);
+  //     return acc;
+  //   }, filtered);
 
-    return filtered;
-  }
+  //   return filtered;
+  // }
 
   function handleSearch() {
-    const filtered = filterList(initList);
-    setList(filtered);
+    // const filtered = filterList(initList);
+    fetchList(1, pageSize);
   }
 
   function handleReset() {
     searchForm.resetFields();
-    setList(initList);
+    fetchList(1, pageSize);
+  }
+
+  function handleTableChange({ current, pageSize }: { current?: number; pageSize?: number }) {
+    fetchList(current, pageSize);
   }
 
   function handleAdd() {
@@ -121,7 +136,7 @@ export default function App() {
     const { code, message: msg } = res;
     if (code === 200) {
       message.success(msg);
-      fetchList();
+      fetchList(current, pageSize);
     } else message.error(msg);
   }
 
@@ -144,7 +159,7 @@ export default function App() {
     if (code === 200) {
       handleCancel();
       message.success(msg);
-      fetchList();
+      fetchList(current, pageSize);
     } else message.error(msg);
   }
 
@@ -159,14 +174,17 @@ export default function App() {
     });
   }
 
-  async function fetchList() {
-    const res = await request('/node/video-list');
+  async function fetchList(current = 1, pageSize = 10) {
+    const values = searchForm.getFieldsValue();
+    const params = { ...values, current, pageSize };
+    const res = await request(`/node/video-list?${stringify(params)}`);
     if (!res) return;
 
     const { code, data, message: msg } = res;
     if (code === 200 && data) {
-      setInitList(data);
-      setList(filterList(data));
+      const { current, pageSize, total, list } = data;
+      setList(list);
+      setPagination({ current, pageSize, total });
     } else message.error(msg); 
   }
 
@@ -261,7 +279,7 @@ export default function App() {
   ];
 
   useEffect(() => {
-    fetchList();
+    fetchList(1, pageSize);
     fetchTagList();
     fetchActorList();
     fetchSeriesList();
@@ -350,12 +368,8 @@ export default function App() {
         rowKey="id"
         dataSource={list}
         columns={columns}
-        pagination={{
-          total: list?.length,
-          showTotal: (total: number) => `共${total}条`,
-          showSizeChanger: true,
-          showQuickJumper: true,
-        }}
+        pagination={tablePagination}
+        onChange={handleTableChange}
       />
       <Modal
         open={visible}

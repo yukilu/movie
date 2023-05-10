@@ -160,3 +160,12 @@ export const headers = {
 export function request(url: string, options?: any) {
   return fetch(url, options).then(res => res.json());
 }
+
+export function stringify(params: Object) {
+  return Object.entries(params).reduce((acc, cur) => {
+    const [k, v] = cur;
+    if (v)
+      acc.push(`${k}=${v}`);
+    return acc;
+  }, [] as string[]).join('&');
+}

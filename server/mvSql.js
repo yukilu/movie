@@ -24,9 +24,9 @@ db.serialize(function() {
   //   console.log(err, result);
   // });
 
-  db.run('ALTER TABLE video ADD COLUMN actors CHAR(60)', (err, result) => {
-    console.log(err, result);
-  });
+  // db.run('ALTER TABLE video ADD COLUMN actors CHAR(60)', (err, result) => {
+  //   console.log(err, result);
+  // });
 
   // const sql = `SELECT s.id, c.id AS content_id, name, idx, content, link
   //                 FROM subject AS s
@@ -38,10 +38,11 @@ db.serialize(function() {
   //                 LEFT JOIN content AS c ON s.id = c.subject_id
   //                 ORDER BY time`;
 
-  // const sql = 'SELECT * FROM actor';
+  const sql = 'SELECT * FROM video ORDER BY date limit 10 offset 10';
+  // const sql = 'select count (*) from video'
 
-  // db.all(sql, (err, rows) => {
-  //   console.log('select');
-  //   console.log(err, rows);
-  // });
+  db.all(sql, undefined, (err, rows) => {
+    // console.log('select');
+    console.log(err, rows);
+  });
 });

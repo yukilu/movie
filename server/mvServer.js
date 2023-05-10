@@ -8,11 +8,24 @@ app.use(express.urlencoded({ extended: true }));
 
 const dbName = 'mv.db';
 
-function selectAll(sql) {
+function getTotal(whereSql) {
+  return new Promise(function (resolve, reject) {
+    const db = new sqlite3.Database(dbName);
+    db.serialize(function () {
+      db.get(`SELECT COUNT (*) FROM video ${whereSql}`, (err, row) => {
+        if (err) reject(err);
+        else resolve(row['COUNT (*)']);
+        db.close();
+      });
+    });
+  });
+}
+
+function selectAll(sql, values) {
   return new Promise(function (resolve, reject) {
     const db = new sqlite3.Database(dbName);
     db.serialize(function() {
-      db.all(sql, (err, rows) => {
+      db.all(sql, values, (err, rows) => {
         if (err) reject(err);
         else resolve(rows);
         db.close();
@@ -37,7 +50,7 @@ function run(sql, values) {
 
 // actor
 app.get('/node/actor-list', (req, res) => {
-  const sql = `SELECT * From actor ORDER BY name`;
+  const sql = `SELECT * FROM actor ORDER BY name`;
   selectAll(sql).then(rows => {
     res.json({ code: 200, data: rows, message: 'success' });
   }, err => {
@@ -78,7 +91,7 @@ app.delete('/node/actor/:id', (req, res) => {
 
 // tag
 app.get('/node/tag-list', (req, res) => {
-  const sql = `SELECT * From tag ORDER BY name`;
+  const sql = `SELECT * FROM tag ORDER BY name`;
   selectAll(sql).then(rows => {
     res.json({ code: 200, data: rows, message: 'success' });
   }, err => {
@@ -119,7 +132,7 @@ app.delete('/node/tag/:id', (req, res) => {
 
 // series
 app.get('/node/series-list', (req, res) => {
-  const sql = `SELECT * From series ORDER BY name`;
+  const sql = `SELECT * FROM series ORDER BY name`;
   selectAll(sql).then(rows => {
     res.json({ code: 200, data: rows, message: 'success' });
   }, err => {
@@ -160,10 +173,36 @@ app.delete('/node/series/:id', (req, res) => {
 
 // video
 app.get('/node/video-list', (req, res) => {
-  const sql = `SELECT * From video ORDER BY date`;
-  selectAll(sql).then(rows => {
-    res.json({ code: 200, data: rows, message: 'success' });
-  }, err => {
+  const { pageSize, current, name, actor, tag, series, disk } = req.query;
+  const size = +pageSize;
+  const num = +current;
+  const querySqls = [];
+  const params = [size, size * (num - 1)];
+
+  if (name) {
+    querySqls.push(`name LIKE '%${name}%'`);
+  }
+  if (series) {
+    querySqls.push(`series = ${series}`);
+  }
+  if (actor) {
+    querySqls.push(`(actors LIKE '%,${actor},%' OR actors LIKE '${actor},%' OR actors LIKE '%,${actor}' OR actors = '${actor}')`);
+  }
+  if (tag) {
+    querySqls.push(`(tags LIKE '%,${tag},%' OR tags LIKE '${tag},%' OR tags LIKE '%,${tag}' OR tags = '${tag}')`);
+  }
+  if (disk) {
+    querySqls.push(`disk = '${disk}'`);
+  }
+
+  const whereSql = querySqls.length ? `WHERE ${querySqls.join(' AND ')}` : '';
+  const sql = `SELECT * FROM video ${whereSql} ORDER BY date LIMIT ? OFFSET ?`;
+  // console.log(sql, params);
+  
+  Promise.all([selectAll(sql, params), getTotal(whereSql)]).then(([rows, total]) => {
+    const pagination = { current: num, pageSize: size, total, list: rows };
+    res.json({ code: 200, data: pagination, message: 'success' });
+  }).catch(err => {
     res.json({ code: 500, data: null, message: err?.code });
   });
 });
