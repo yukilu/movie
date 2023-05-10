@@ -24,6 +24,10 @@ db.serialize(function() {
   //   console.log(err, result);
   // });
 
+  db.run('ALTER TABLE video ADD COLUMN actors CHAR(60)', (err, result) => {
+    console.log(err, result);
+  });
+
   // const sql = `SELECT s.id, c.id AS content_id, name, idx, content, link
   //                 FROM subject AS s
   //                 LEFT JOIN content as c ON s.id = c.subject_id

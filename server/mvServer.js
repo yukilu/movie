@@ -170,9 +170,9 @@ app.get('/node/video-list', (req, res) => {
 
 app.post('/node/video', (req, res) => {
   const date = dayjs().format('YYYY-MM-DD');
-  const { name, series, idx, actor, tags, status, disk, desc } = req.body;
-  const sql = 'INSERT INTO video (name, series, idx, actor, tags, status, disk, desc, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-  run(sql, [name, series, idx, actor, tags, status, disk, desc, date]).then(result => {
+  const { name, series, idx, actors, tags, status, disk, desc } = req.body;
+  const sql = 'INSERT INTO video (name, series, idx, actors, tags, status, disk, desc, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  run(sql, [name, series, idx, actors, tags, status, disk, desc, date]).then(result => {
     res.json({ code: 200, data: result, message: 'video add success' });
   }, err => {
     res.json({ code: 500, data: null, message: err?.code });
@@ -181,9 +181,9 @@ app.post('/node/video', (req, res) => {
 
 app.put('/node/video/:id', (req, res) => {
   const { id } = req.params;
-  const { name, series, idx, actor, tags, status, disk, desc } = req.body;
-  const sql = 'UPDATE video SET name = ?, series = ?, idx = ?, actor = ?, tags = ?, status = ?, disk = ?, desc = ? WHERE id = ?';
-  run(sql, [name, series, idx, actor, tags, status, disk, desc, id]).then(result => {
+  const { name, series, idx, actors, tags, status, disk, desc } = req.body;
+  const sql = 'UPDATE video SET name = ?, series = ?, idx = ?, actors = ?, tags = ?, status = ?, disk = ?, desc = ? WHERE id = ?';
+  run(sql, [name, series, idx, actors, tags, status, disk, desc, id]).then(result => {
     res.json({ code: 200, data: result, message: 'video edit success' });
   }, err => {
     res.json({ code: 500, data: null, message: err?.code });
