@@ -1,6 +1,6 @@
 export interface ActorSearchParams {
   name?: string;
-  tag?: string;
+  tag?: number;
 }
 
 interface ActorBase {
@@ -12,7 +12,7 @@ interface ActorBase {
 }
 
 export type ActorFieldsValue = ActorBase & {
-  tags?: string[];
+  tags?: number[];
 }
 
 export type ActorEditParams = ActorBase & {
@@ -56,7 +56,7 @@ export interface SearchParams {
   series?: number;
   idx?: string;
   actor?: number;
-  tag?: string;
+  tag?: number;
   status?: string;
   disk?: string;
 }
@@ -65,18 +65,19 @@ interface Base {
   name: string;
   series?: number;
   idx?: string;
-  actor?: number;
   status: string;
   disk?: string;
   desc?: string;
 }
 
 export type FieldsValue = Base & {
-  tags?: string[];
+  tags?: number[];
+  actors?: number[];
 }
 
 export type EditParams = Base & {
   tags?: string;
+  actors?: string;
 };
 export type ListItem = EditParams & { id: number; date: string };
 
@@ -86,6 +87,38 @@ interface TypeOption {
 }
 
 type TypeMap = Record<string, string>;
+export type NumMap = Record<number, string>;
+export type TagMap = Record<number, TagListItem>;
+
+export function getIdListByIds(ids?: string) {
+  if (!ids) return [];
+  return ids.split(',').map(id => +id);
+}
+
+export function getNumMap<T extends { id: number; name: string; }>(list: T[]) {
+  return list.reduce((acc, cur) => {
+    const { id, name } = cur;
+    acc[id] = name;
+    return acc;
+  }, {} as NumMap);
+}
+
+export function getTagMap(list: TagListItem[]) {
+  return list.reduce((acc, cur) => {
+    acc[cur.id] = cur;
+    return acc;
+  }, {} as TagMap);
+}
+
+export function getNames(ids: string, idMap: NumMap) {
+  if (!ids) return '';
+  return getIdListByIds(ids).map(id => idMap[id]).join('，');
+}
+
+export function getTags(ids: string, tagMap: TagMap) {
+  if (!ids) return [];
+  return getIdListByIds(ids).map(id => tagMap[id]).filter(o => o);
+}
 
 function getTypeMap(list: TypeOption[]) {
   return list.reduce((acc, cur) => {
@@ -108,8 +141,9 @@ export const seriesTypeMap = getTypeMap(seriesTypes);
 export const statusTypes = [
   { label: '未下载', value: '1' },
   { label: '已下载', value: '2' },
-  { label: '下载已删除', value: '3' },
+  { label: '已删除', value: '3' },
 ];
+export const statusColors = ['', 'default', 'processing', 'error'];
 export const statusTypeMap = getTypeMap(statusTypes);
 export const diskTypes = [
   { label: 'Toshiba', value: '1' },

@@ -12,6 +12,7 @@ import {
   Table,
   Select,
   Space,
+  Tag,
 } from 'antd';
 import {
   EditOutlined,
@@ -20,7 +21,7 @@ import {
   SearchOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { headers, request } from './utils';
+import { getIdListByIds, getTagMap, getTags, headers, request } from './utils';
 import type { ColumnsType } from 'antd/es/table';
 import type {
   ActorSearchParams as SearchParams,
@@ -28,6 +29,7 @@ import type {
   ActorEditParams as EditParams,
   ActorListItem as ListItem,
   TagListItem,
+  TagMap,
 } from './utils';
 import './App.css';
 
@@ -39,6 +41,7 @@ export default function Actor() {
   const [visible, setVisible] = useState(false);
   const [record, setRecord] = useState<ListItem | null>(null);
   const [tagList, setTagList] = useState<TagListItem[]>([]);
+  const [tagMap, setTagMap] = useState<TagMap>({})
 
   const [searchForm] = Form.useForm<SearchParams>();
   const [form] = Form.useForm<FieldsValue>();
@@ -51,7 +54,7 @@ export default function Actor() {
     if (name)
       filtered = list.filter(item => item.name.includes(name));
     if (tag)
-      filtered = list.filter(item => item.tags?.includes(tag));
+      filtered = list.filter(item => getIdListByIds(item.tags).includes(tag));
     return filtered;
   }
 
@@ -75,7 +78,7 @@ export default function Actor() {
     const { tags, ...rest } = record;
     form.setFieldsValue({
       ...rest,
-      tags: tags ? tags.split(',') : undefined,
+      tags: tags ? getIdListByIds(tags) : undefined,
     });
   }
 
@@ -141,7 +144,10 @@ export default function Actor() {
     if (!res) return;
 
     const { code, data } = res;
-    if (code === 200 && data) setTagList(data);
+    if (code === 200 && data) {
+      setTagList(data);
+      setTagMap(getTagMap(data));
+    }
   }
 
   const columns: ColumnsType<ListItem> = [
@@ -164,6 +170,7 @@ export default function Actor() {
     {
       title: '标签',
       dataIndex: 'tags',
+      render: (s: string) => s ? getTags(s, tagMap).map(({ id, name, color }) => <Tag key={id} color={color}>{name}</Tag>) : null,
     },
     {
       title: '描述',

@@ -20,7 +20,20 @@ import {
   SearchOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { headers, request, diskTypes, statusTypes, statusTypeMap, diskTypeMap } from './utils';
+import {
+  headers,
+  request,
+  diskTypes,
+  statusTypes,
+  statusTypeMap,
+  diskTypeMap,
+  getNumMap,
+  getTagMap,
+  getNames,
+  getTags,
+  getIdListByIds,
+  statusColors,
+} from './utils';
 import type { ColumnsType } from 'antd/es/table';
 import type {
   SearchParams,
@@ -30,6 +43,8 @@ import type {
   TagListItem,
   ActorListItem,
   SeriesListItem,
+  TagMap,
+  NumMap,
 } from './utils';
 import './App.css';
 
@@ -41,8 +56,11 @@ export default function App() {
   const [visible, setVisible] = useState(false);
   const [record, setRecord] = useState<ListItem | null>(null);
   const [tagList, setTagList] = useState<TagListItem[]>([]);
+  const [tagMap, setTagMap] = useState<TagMap>({})
   const [actorList, setActorList] = useState<ActorListItem[]>([]);
+  const [actorMap, setActorMap] = useState<NumMap>({});
   const [seriesList, setSeriesList] = useState<SeriesListItem[]>([]);
+  const [seriesMap, setSeriesMap] = useState<NumMap>({});
 
   const [searchForm] = Form.useForm<SearchParams>();
   const [form] = Form.useForm<FieldsValue>();
@@ -51,13 +69,15 @@ export default function App() {
 
   function filterList(list: ListItem[]) {
     const searchValues =  searchForm.getFieldsValue();
-    const { name, tag } = searchValues;
+    const { name, tag, actor } = searchValues;
     let filtered = list;
     if (name)
       filtered = list.filter(item => item.name.includes(name));
     if (tag)
-      filtered = list.filter(item => item.tags?.includes(tag));
-    filtered = (['series', 'idx', 'actor', 'status', 'disk'] as const).reduce((acc, cur) => {
+      filtered = list.filter(item => getIdListByIds(item.tags).includes(tag));
+    if (actor)
+      filtered = list.filter(item => getIdListByIds(item.actors).includes(actor));
+    filtered = (['series', 'idx', 'status', 'disk'] as const).reduce((acc, cur) => {
       const value = searchValues[cur];
       if (value)
         return acc.filter(item => item[cur] === value);
@@ -84,10 +104,11 @@ export default function App() {
   function handleEdit(record: ListItem) {
     setVisible(true);
     setRecord(record);
-    const { tags, ...rest } = record;
+    const { tags, actors, ...rest } = record;
     form.setFieldsValue({
       ...rest,
-      tags: tags ? tags.split(',') : undefined,
+      tags: tags ? getIdListByIds(tags) : undefined,
+      actors: actors ? getIdListByIds(actors) : undefined,
     });
   }
 
@@ -129,10 +150,11 @@ export default function App() {
 
   function handleSubmit() {
     form.validateFields().then(values => {
-      const { tags, ...rest } = values;
+      const { tags, actors, ...rest } = values;
       postOrPut({
         ...rest,
         tags: tags ? tags.join(',') : undefined,
+        actors: actors ? actors.join(',') : undefined,
       });
     });
   }
@@ -153,7 +175,10 @@ export default function App() {
     if (!res) return;
 
     const { code, data } = res;
-    if (code === 200 && data) setTagList(data);
+    if (code === 200 && data) {
+      setTagList(data);
+      setTagMap(getTagMap(data));
+    }
   }
 
   async function fetchActorList() {
@@ -161,7 +186,10 @@ export default function App() {
     if (!res) return;
 
     const { code, data } = res;
-    if (code === 200 && data) setActorList(data);
+    if (code === 200 && data) {
+      setActorList(data);
+      setActorMap(getNumMap(data));
+    }
   }
 
   async function fetchSeriesList() {
@@ -169,7 +197,10 @@ export default function App() {
     if (!res) return;
 
     const { code, data } = res;
-    if (code === 200 && data) setSeriesList(data);
+    if (code === 200 && data) {
+      setSeriesList(data);
+      setSeriesMap(getNumMap(data));
+    }
   }
 
 
@@ -180,7 +211,8 @@ export default function App() {
     },
     {
       title: '系列',
-      dataIndex: 'seriesName',
+      dataIndex: 'series',
+      render: (s: number) => seriesMap[s],
     },
     {
       title: '序号',
@@ -188,16 +220,18 @@ export default function App() {
     },
     {
       title: '演员',
-      dataIndex: 'actorName',
+      dataIndex: 'actors',
+      render: (s: string) => getNames(s, actorMap),
     },
     {
       title: '标签',
       dataIndex: 'tags',
+      render: (s: string) => s ? getTags(s, tagMap).map(({ id, name, color }) => <Tag key={id} color={color}>{name}</Tag>) : null,
     },
     {
       title: '状态',
       dataIndex: 'status',
-      render: (s: string) => statusTypeMap[s],
+      render: (s: string) => s ? <Tag color={statusColors[+s]}>{statusTypeMap[s]}</Tag> : null,
     },
     {
       title: '位置',
@@ -268,7 +302,7 @@ export default function App() {
             </Item>
           </Col>
           <Col span={8}>
-            <Item label="标签" name="tags">
+            <Item label="标签" name="tag">
               <Select
                 allowClear
                 showSearch
@@ -358,10 +392,11 @@ export default function App() {
           >
             <Input allowClear placeholder="请输入序号" />
           </Item>
-          <Item label="演员" name="actor">
+          <Item label="演员" name="actors">
             <Select
               allowClear
               showSearch
+              mode="multiple"
               placeholder="请选择演员"
               optionFilterProp="name"
               options={actorList}
