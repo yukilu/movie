@@ -134,8 +134,8 @@ export const tagTypes = [
 ];
 export const tagTypeMap = getTypeMap(tagTypes);
 export const seriesTypes = [
-  { label: '有码', value: '1' },
-  { label: '无码', value: '2' },
+  { label: '无码', value: '1' },
+  { label: '有码', value: '2' },
 ];
 export const seriesTypeMap = getTypeMap(seriesTypes);
 export const statusTypes = [

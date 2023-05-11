@@ -7,6 +7,7 @@ import {
   message,
   Modal,
   Popconfirm,
+  Radio,
   Row,
   Table,
   Select,
@@ -138,7 +139,7 @@ export default function Series() {
     {
       title: '类型',
       dataIndex: 'type',
-      render: (t: string) => <Tag color={t === '无码' ? 'blue' : 'magenta'}>{seriesTypeMap[t]}</Tag>,
+      render: (t: string) => <Tag color={t === '1' ? 'blue' : 'magenta'}>{seriesTypeMap[t]}</Tag>,
     },
     {
       title: '出版商',
@@ -230,8 +231,11 @@ export default function Series() {
             label="类型"
             name="type"
             rules={[{ required: true }]}
+            initialValue="1"
           >
-            <Select placeholder="请选择类型" options={seriesTypes} />
+            <Radio.Group>
+              {seriesTypes.map(({ value, label }) => <Radio key={value} value={value}>{label}</Radio>)}
+            </Radio.Group>
           </Item>
           <Item
             label="出版商"
