@@ -7,6 +7,7 @@ import {
   message,
   Modal,
   Popconfirm,
+  Radio,
   Row,
   Table,
   Select,
@@ -57,6 +58,7 @@ export default function App() {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [visible, setVisible] = useState(false);
   const [record, setRecord] = useState<ListItem | null>(null);
+  const [last, setLast] = useState<FieldsValue | null>(null);
   const [tagList, setTagList] = useState<TagListItem[]>([]);
   const [tagMap, setTagMap] = useState<TagMap>({})
   const [actorList, setActorList] = useState<ActorListItem[]>([]);
@@ -114,6 +116,13 @@ export default function App() {
 
   function handleAdd() {
     setVisible(true);
+    if (last) {
+      const { series, idx } = last;
+      form.setFieldsValue({
+        series,
+        idx: idx ? (+idx + 1).toString().padStart(3, '0') : undefined,
+      });
+    }
   }
 
   function handleEdit(record: ListItem) {
@@ -166,6 +175,8 @@ export default function App() {
   function handleSubmit() {
     form.validateFields().then(values => {
       const { tags, actors, ...rest } = values;
+      setLast(values);
+
       postOrPut({
         ...rest,
         tags: tags ? tags.join(',') : undefined,
@@ -224,10 +235,6 @@ export default function App() {
 
   const columns: ColumnsType<ListItem> = [
     {
-      title: '名称',
-      dataIndex: 'name',
-    },
-    {
       title: '系列',
       dataIndex: 'series',
       render: (s: number) => seriesMap[s],
@@ -235,6 +242,10 @@ export default function App() {
     {
       title: '序号',
       dataIndex: 'idx',
+    },
+    {
+      title: '名称',
+      dataIndex: 'name',
     },
     {
       title: '演员',
@@ -382,15 +393,12 @@ export default function App() {
           labelCol={{ span: 4 }}
           wrapperCol={{ span: 20 }}
           validateMessages={{ required: '${label}不能为空' }}
-        >
+        >  
           <Item
-            label="名称"
-            name="name"
+            label="系列"
+            name="series"
             rules={[{ required: true }]}
           >
-            <Input allowClear placeholder="请输入名称" />
-          </Item>
-          <Item label="系列" name="series">
             <Select
               allowClear
               showSearch
@@ -405,6 +413,13 @@ export default function App() {
             name="idx"
           >
             <Input allowClear placeholder="请输入序号" />
+          </Item>
+          <Item
+            label="名称"
+            name="name"
+            // rules={[{ required: true }]}
+          >
+            <Input allowClear placeholder="请输入名称" />
           </Item>
           <Item label="演员" name="actors">
             <Select
@@ -431,12 +446,12 @@ export default function App() {
           <Item
             label="状态"
             name="status"
+            rules={[{ required: true }]}
+            initialValue="2"
           >
-            <Select
-              allowClear
-              placeholder="请选择状态"
-              options={statusTypes}
-            />
+            <Radio.Group>
+              {statusTypes.map(({ value, label }) => <Radio key={value} value={value}>{label}</Radio>)}
+            </Radio.Group>
           </Item>
           <Item
             label="位置"

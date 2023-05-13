@@ -132,11 +132,11 @@ export default function Tag() {
       dataIndex: 'name',
       render: (n: string, record) => <AntdTag color={record.color}>{n}</AntdTag>,
     },
-    {
-      title: '类型',
-      dataIndex: 'type',
-      render: (t: string) => tagTypeMap[t],
-    },
+    // {
+    //   title: '类型',
+    //   dataIndex: 'type',
+    //   render: (t: string) => tagTypeMap[t],
+    // },
     {
       title: '颜色',
       dataIndex: 'color',
@@ -173,12 +173,12 @@ export default function Tag() {
               <Input allowClear placeholder="请输入名称" />
             </Item>
           </Col>
-          <Col span={8}>
+          {/* <Col span={8}>
             <Item label="类型" name="type">
               <Select allowClear placeholder="请选择类型" options={tagTypes} />
             </Item>
-          </Col>
-          <Col span={8} style={{ textAlign: 'right' }}>
+          </Col> */}
+          <Col span={16} style={{ textAlign: 'right' }}>
             <Space>
               <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} />
               <Button icon={<ReloadOutlined />} onClick={handleReset} />
@@ -217,13 +217,13 @@ export default function Tag() {
           >
             <Input allowClear placeholder="请输入名称" />
           </Item>
-          <Item
+          {/* <Item
             label="类型"
             name="type"
             rules={[{ required: true }]}
           >
             <Select placeholder="请选择类型" options={tagTypes} />
-          </Item>
+          </Item> */}
           <Item
             label="颜色"
             name="color"
@@ -233,8 +233,16 @@ export default function Tag() {
               allowClear
               showSearch
               placeholder="请选择颜色"
-              options={colors}
-            />
+              optionLabelProp="value"
+            >
+              {colors.map(({ value, label }) => (
+                <Select.Option key={value}>
+                  <AntdTag color={value}>
+                    {label}
+                  </AntdTag>
+                </Select.Option>
+              ))}
+            </Select>
           </Item>
           <Item
             label="描述"
